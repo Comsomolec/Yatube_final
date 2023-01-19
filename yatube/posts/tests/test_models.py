@@ -22,9 +22,9 @@ class PostModelTest(TestCase):
             group=cls.group,
         )
         cls.comment = Comment.objects.create(
-            post = cls.post,
-            author = cls.user,
-            text = 'Тестовый комментарий'
+            post=cls.post,
+            author=cls.user,
+            text='Тестовый комментарий'
         )
 
     def test_models_have_correct_object_names(self):

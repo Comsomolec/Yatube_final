@@ -90,7 +90,7 @@ class Comment(models.Model):
     )
     created = models.DateTimeField(
         auto_now_add=True,
-        verbose_name='Дата публикации'        
+        verbose_name='Дата публикации'
     )
     text = models.TextField(
         verbose_name='Текст комментария',

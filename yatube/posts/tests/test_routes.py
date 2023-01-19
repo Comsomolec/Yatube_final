@@ -18,6 +18,7 @@ CASES = [
     ['/profile/author/unfollow/', 'profile_unfollow', [USER]],
 ]
 
+
 class PostRoutesTests(TestCase):
     def test_routes_calculation_get_correct_url(self):
         """Тестирование маршрутов, расчеты выдают ожидаемые URL"""

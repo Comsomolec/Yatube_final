@@ -16,7 +16,7 @@ TEST_SLUG = 'test_slug'
 TEST2_SLUG = 'test2_slug'
 TEST_USERNAME = 'Author_post'
 DEFAULT_POSTS_IMG_PATH = 'posts/'
-TEST_IMG_NAME='small.gif'
+TEST_IMG_NAME = 'small.gif'
 TEST_IMAGE = (
     b'\x47\x49\x46\x38\x39\x61\x02\x00'
     b'\x01\x00\x80\x00\x00\x00\x00\x00'
@@ -81,10 +81,10 @@ class PostFormTests(TestCase):
     def test_form_post_create_work_correct(self):
         """Отправка формы при создании поста работает корректно."""
         test_image = SimpleUploadedFile(
-                TEST_IMG_NAME,
-                TEST_IMAGE,
-                TEST_IMAGE_TYPE
-            )
+            TEST_IMG_NAME,
+            TEST_IMAGE,
+            TEST_IMAGE_TYPE
+        )
         posts = set(Post.objects.all())
         data = {
             'text': 'Текст нового поста',
@@ -109,10 +109,10 @@ class PostFormTests(TestCase):
         """Отправка формы при редактирования поста работает корректно."""
 
         test_image = SimpleUploadedFile(
-                TEST_IMG_NAME,
-                TEST_IMAGE,
-                TEST_IMAGE_TYPE
-            )
+            TEST_IMG_NAME,
+            TEST_IMAGE,
+            TEST_IMAGE_TYPE
+        )
         data = {
             'text': 'Отредактированный пост',
             'group': self.group2.id,
@@ -177,5 +177,5 @@ class PostFormTests(TestCase):
         self.assertIsInstance(
             self.author_post_client.get(
                 self.POST_DETAIL_URL).context['form'].fields['text'],
-                forms.fields.CharField
+            forms.fields.CharField
         )

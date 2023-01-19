@@ -57,12 +57,12 @@ def profile(request, username):
 
 
 def post_detail(request, post_id):
-    post= get_object_or_404(Post, id=post_id)
+    post = get_object_or_404(Post, id=post_id)
     return render(
         request,
         'posts/post_detail.html',
         {
-            'post': post, 
+            'post': post,
             'form': CommentForm(request.POST or None),
             'comments': post.comments.all(),
         }
@@ -74,7 +74,7 @@ def post_create(request):
     form = PostForm(
         request.POST or None,
         request.FILES or None,
-        )
+    )
     if not form.is_valid():
         return render(request, 'posts/create_post.html', {'form': form})
 
@@ -140,7 +140,8 @@ def profile_follow(request, username):
     user = request.user
     author = get_object_or_404(User, username=username)
     if user != author and not Follow.objects.filter(
-        user=user, author=author).exists():
+        user=user, author=author
+    ).exists():
         Follow.objects.create(user=user, author=author)
     return redirect(
         reverse('posts:profile', args=[username])

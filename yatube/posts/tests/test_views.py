@@ -15,14 +15,14 @@ TEST_SLUG_GROUP1 = 'test_slug_1'
 TEST_SLUG_GROUP2 = 'test_slug_2'
 TEST_USERNAME_AUTHOR = 'Author_post'
 TEST_USERNAME_ANOTHER = 'Another_user'
-TEST_IMAGE = (            
-             b'\x47\x49\x46\x38\x39\x61\x02\x00'
-             b'\x01\x00\x80\x00\x00\x00\x00\x00'
-             b'\xFF\xFF\xFF\x21\xF9\x04\x00\x00'
-             b'\x00\x00\x00\x2C\x00\x00\x00\x00'
-             b'\x02\x00\x01\x00\x00\x02\x02\x0C'
-             b'\x0A\x00\x3B'
-        )
+TEST_IMAGE = (
+    b'\x47\x49\x46\x38\x39\x61\x02\x00'
+    b'\x01\x00\x80\x00\x00\x00\x00\x00'
+    b'\xFF\xFF\xFF\x21\xF9\x04\x00\x00'
+    b'\x00\x00\x00\x2C\x00\x00\x00\x00'
+    b'\x02\x00\x01\x00\x00\x02\x02\x0C'
+    b'\x0A\x00\x3B'
+)
 TEST_COMMENT = 'Тестовый комментарий'
 
 INDEX_URL = reverse('posts:main_page')
@@ -194,16 +194,12 @@ class PostViewTests(TestCase):
     def test_follow_user(self):
         """Тестирование подписки на пользователей"""
 
-        self.assertFalse(Follow.objects.filter(
-            user=self.user_another,
-            author=self.user
-            )
+        self.assertFalse(
+            Follow.objects.filter(user=self.user_another, author=self.user)
         )
         self.another_client.get(FOLLOW_URL)
-        self.assertTrue(Follow.objects.filter(
-            user=self.user_another,
-            author=self.user
-            )
+        self.assertTrue(
+            Follow.objects.filter(user=self.user_another, author=self.user)
         )
         posts = self.another_client.get(FOLLOW_INDEX_URL).context['page_obj']
         self.assertEqual(len(posts), 1)
