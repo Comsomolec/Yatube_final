@@ -20,53 +20,34 @@ def paginator_page(list, request):
 
 @cache_page(20, key_prefix='index_page')
 def index(request):
-    return render(
-        request,
-        'posts/index.html',
-        {'page_obj': paginator_page(Post.objects.all(), request), }
-    )
+    return render(request, 'posts/index.html', {
+        'page_obj': paginator_page(Post.objects.all(), request),
+    })
 
 
 def group_posts(request, slug):
     group = get_object_or_404(Group, slug=slug)
-    return render(
-        request,
-        'posts/group_list.html',
-        {
-            'group': group,
-            'page_obj': paginator_page(group.posts.all(), request),
-        }
-    )
+    return render(request, 'posts/group_list.html', {
+        'group': group,
+        'page_obj': paginator_page(group.posts.all(), request),
+    })
 
 
 def profile(request, username):
     author = get_object_or_404(User, username=username)
-    following = (
-        request.user.is_authenticated
-        and author.following.filter(user=request.user).exists()
-    )
-    return render(
-        request,
-        'posts/profile.html',
-        {
-            'author': author,
-            'page_obj': paginator_page(author.posts.all(), request),
-            'following': following,
-        }
-    )
+    return render(request, 'posts/profile.html', {
+        'author': author,
+        'page_obj': paginator_page(author.posts.all(), request),
+        'following': request.user.is_authenticated
+        and author.following.filter(user=request.user, author=author).exists(),
+    })
 
 
 def post_detail(request, post_id):
-    post = get_object_or_404(Post, id=post_id)
-    return render(
-        request,
-        'posts/post_detail.html',
-        {
-            'post': post,
-            'form': CommentForm(request.POST or None),
-            'comments': post.comments.all(),
-        }
-    )
+    return render(request, 'posts/post_detail.html', {
+        'post': get_object_or_404(Post, id=post_id),
+        'form': CommentForm(request.POST or None),
+    })
 
 
 @login_required
@@ -138,11 +119,13 @@ def follow_index(request):
 @login_required
 def profile_follow(request, username):
     user = request.user
-    author = get_object_or_404(User, username=username)
-    if user != author and not Follow.objects.filter(
+    author = User.objects.get(username=username)
+    if user.username != username and not Follow.objects.filter(
         user=user, author=author
     ).exists():
-        Follow.objects.create(user=user, author=author)
+        Follow.objects.create(
+            user=user, author=author
+        )
     return redirect(
         reverse('posts:profile', args=[username])
     )
@@ -150,8 +133,10 @@ def profile_follow(request, username):
 
 @login_required
 def profile_unfollow(request, username):
-    author = get_object_or_404(User, username=username)
-    Follow.objects.filter(user=request.user, author=author).delete()
+    get_object_or_404(
+        Follow, user=request.user,
+        author=User.objects.get(username=username)
+    ).delete()
     return redirect(
         reverse('posts:profile', args=[username])
     )

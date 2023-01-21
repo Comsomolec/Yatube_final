@@ -3,7 +3,7 @@
   Пост {{ post.text|truncatechars:30 }}
 {% endblock %}
 {% block content %}
-{% load thumbnail %}
+  {% load thumbnail %}
   <div class="row">
     <aside class="col-12 col-md-3">
       <ul class="list-group list-group-flush">
@@ -21,7 +21,7 @@
         <li class="list-group-item d-flex justify-content-between align-items-center">
           Всего постов автора:  <span>{{ post.author.posts.count }}</span>
         </li>
-        {% if post.author == request.user %}
+        {% if post.author == user %}
           <li class="list-group-item">
             <a href="{% url 'posts:post_edit' post.id %}">
               Редактирование поста
@@ -36,6 +36,6 @@
         <img class="card-img my-2" src="{{ im.url }}" width="{{ im.width }}" height="{{ im.height }}">
       {% endthumbnail %}  
     </article>
-    {% include 'includes/comment.html' %}
+    {% include 'posts/comment.html' %}
   </div>
 {% endblock %}

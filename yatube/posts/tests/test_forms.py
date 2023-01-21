@@ -14,7 +14,8 @@ TEMP_MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
 
 TEST_SLUG = 'test_slug'
 TEST2_SLUG = 'test2_slug'
-TEST_USERNAME = 'Author_post'
+TEST_USERNAME_AUTHOR = 'Author_post'
+TEST_USERNAME_ANOTHER = 'Another'
 DEFAULT_POSTS_IMG_PATH = 'posts/'
 TEST_IMG_NAME = 'small.gif'
 TEST_IMAGE = (
@@ -29,7 +30,7 @@ TEST_IMAGE_TYPE = 'image/gif'
 
 INDEX_URL = reverse('posts:main_page')
 CREATE_URL = reverse('posts:post_create')
-PROFILE_URL = reverse('posts:profile', args=[TEST_USERNAME])
+PROFILE_URL = reverse('posts:profile', args=[TEST_USERNAME_AUTHOR])
 GROUP_LIST_URL = reverse('posts:group_posts', args=[TEST_SLUG])
 
 
@@ -38,7 +39,9 @@ class PostFormTests(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.user = User.objects.create_user(username=TEST_USERNAME)
+        cls.user = User.objects.create_user(username=TEST_USERNAME_AUTHOR)
+        cls.user_another = User.objects.create_user(
+            username=TEST_USERNAME_ANOTHER)
         cls.group = Group.objects.create(
             title='Тестовая группа',
             slug=TEST_SLUG,
@@ -53,6 +56,11 @@ class PostFormTests(TestCase):
             author=cls.user,
             text='Пост для проверки редактирования',
             group=cls.group,
+            image=SimpleUploadedFile(
+                TEST_IMG_NAME,
+                TEST_IMAGE,
+                TEST_IMAGE_TYPE
+            )
         )
         cls.POST_DETAIL_URL = reverse(
             'posts:post_detail',
@@ -66,17 +74,14 @@ class PostFormTests(TestCase):
             'posts:add_comment',
             args=[cls.post.pk]
         )
+        cls.guest = Client()
+        cls.another_client = Client()
+        cls.another_client.force_login(cls.user_another)
+        cls.author_post_client = Client()
+        cls.author_post_client.force_login(cls.user)
 
-    @classmethod
-    def tearDownClass(cls):
-        super().tearDownClass()
+    def tearDown(self):
         shutil.rmtree(TEMP_MEDIA_ROOT, ignore_errors=True)
-
-    def setUp(self):
-        """Создаем и авторизуем пользователя - автор поста"""
-
-        self.author_post_client = Client()
-        self.author_post_client.force_login(self.user)
 
     def test_form_post_create_work_correct(self):
         """Отправка формы при создании поста работает корректно."""
@@ -128,27 +133,76 @@ class PostFormTests(TestCase):
         self.assertEqual(post.text, data['text'])
         self.assertEqual(post.group.id, data['group'])
         self.assertEqual(post.author, self.post.author)
-        self.assertTrue(post.image)
+        self.assertEqual(post.image, self.post.image)
 
     def test_form_comment_work_correct(self):
         """Отправка формы добавления комментария работает корректно."""
 
-        self.assertEqual(len(Comment.objects.all()), 0)
         data = {
             'text': 'Тестовый комментарий',
         }
-        response = self.author_post_client.post(
+        response = self.another_client.post(
             self.COMMENT_URL,
             data,
             follow=True
         )
         self.assertRedirects(response, self.POST_DETAIL_URL)
-        comments = self.author_post_client.get(
-            self.POST_DETAIL_URL).context['comments']
+        comments = Comment.objects.filter(post=self.post).all()
         self.assertEqual(len(comments), 1)
         comment = comments[0]
         self.assertEqual(comment.text, data['text'])
-        self.assertEqual(comment.author, self.post.author)
+        self.assertEqual(comment.author, self.user_another)
+        self.assertEqual(comment.post.id, self.post.pk)
+
+    def test_another_user_try_edit_post(self):
+        """Другой пользователь пытается отредактировать пост."""
+
+        post = Post.objects.get(id=self.post.id)
+        data = {
+            'text': 'Попытка отредактиваровать пост',
+        }
+        self.another_client.post(
+            self.POST_EDIT_URL,
+            data,
+            follow=True
+        )
+        self.assertNotEqual(post.text, data['text'])
+
+    def test_guest_user_try_create_post(self):
+        """Гостевой пользователь пытается создать пост и комментарий"""
+
+        amount_post_before = len(set(Post.objects.all()))
+        test_image = SimpleUploadedFile(
+            TEST_IMG_NAME,
+            TEST_IMAGE,
+            TEST_IMAGE_TYPE
+        )
+        data = {
+            'text': 'Текст нового поста',
+            'group': self.group.id,
+            'image': test_image,
+        }
+        self.guest.post(
+            CREATE_URL,
+            data=data,
+            follow=True
+        )
+        after_post_before = len(set(Post.objects.all()))
+        self.assertEqual(amount_post_before, after_post_before)
+
+    def test_guest_user_try_create_comment(self):
+        """Гостевой пользователь пытается создать комментарий"""
+
+        data = {
+            'text': 'Тестовый комментарий',
+        }
+        self.guest.post(
+            self.COMMENT_URL,
+            data,
+            follow=True
+        )
+        self.assertFalse(self.another_client.get(
+            self.POST_DETAIL_URL).context['post'].comments.all())
 
     def test_post_create_and_edit_show_correct_context(self):
         """Шаблоны create и post_edit сформированы с правильным контекстом."""

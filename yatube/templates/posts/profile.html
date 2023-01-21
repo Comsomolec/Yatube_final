@@ -3,46 +3,29 @@
   Пользователь {{ author.get_full_name }}
 {% endblock %}
 {% block content %}
-{% load thumbnail %}
-  <div class="mb-5">        
+  {% load thumbnail %}
+  <div class="container py-5">        
     <h1>Все посты пользователя {{ author.get_full_name }} </h1>
-    <h3>Всего постов: {{ author.posts.count }} </h3>   
-    {% if following %}
-    <a
-      class="btn btn-lg btn-light"
-      href="{% url 'posts:profile_unfollow' author.username %}" role="button"
-    >
-      Отписаться
-    </a>
-  {% else %}
+    <h3>Всего постов: {{ author.posts.count }} </h3>
+    <h3>Подписчиков: {{ author.following.count }}</h3>
+    <h3>Подписан: {{ author.follower.count }}</h3>
+    {% if request.user.is_authenticated and author.username != user.username %}
+      {% if following %}
       <a
-        class="btn btn-lg btn-primary"
-        href="{% url 'posts:profile_follow' author.username %}" role="button"
+        class="btn btn-lg btn-light"
+        href="{% url 'posts:profile_unfollow' author.username %}" role="button"
       >
-        Подписаться
+        Отписаться
       </a>
-   {% endif %}
-    {% for post in page_obj %}
-      <article>
-        <ul>
-          <li>
-            Автор: {{ post.author.get_full_name }}
-          </li>
-          <li>
-            Дата публикации: {{ post.pub_date|date:"d E Y" }} 
-          </li>
-        </ul>
-        {% thumbnail post.image "600x400" crop="center" upscale=True as im %}
-          <img class="card-img my-2" src="{{ im.url }}" width="{{ im.width }}" height="{{ im.height }}">
-        {% endthumbnail %}
-        {{ post.text|truncatechars:80 }}
-        <a href="{% url 'posts:post_detail' post.id %}">читать полностью</a>
-      </article>
-      {% if post.group %} 
-        <a href="{% url 'posts:group_posts' post.group.slug %}">#{{ post.group.title }}</a>
-      {% endif %}        
-      {% if not forloop.last %}<hr>{% endif %}
-    {% endfor %}
-    {% include 'includes/paginator.html' %}
+      {% else %}
+        <a
+          class="btn btn-lg btn-primary"
+          href="{% url 'posts:profile_follow' author.username %}" role="button"
+        >
+          Подписаться
+        </a>
+      {% endif %}
+    {% endif %}
+    {% include 'posts/posts_page.html' %}
   </div>
 {% endblock %}

@@ -3,25 +3,9 @@
  Страница группы: {{ group.title }}
 {% endblock %}
 {% block content %}
-{% load thumbnail %}
   <div class="container py-5">
     <h1> {{ group.title }} </h1>
-    {{ group.description|linebreaks }}
-      {% for post in page_obj %}
-        <ul>
-          <li>
-            Автор: <a href="{% url 'posts:profile' post.author.username %}">{{ post.author.get_full_name }}</a>
-          </li>
-          <li>
-            Дата публикации: {{ post.pub_date|date:"d E Y" }}
-          </li>
-        </ul>
-        {% thumbnail post.image "600x400" crop="center" upscale=True as im %}
-          <img class="card-img my-2" width="{{ im.width }}" height="{{ im.height }}" src="{{ im.url }}">
-        {% endthumbnail %}  
-        {{ post.text|linebreaks }}
-        {% if not forloop.last %}<hr>{% endif %}
-      {% endfor %}
-    {% include 'includes/paginator.html' %}
+    {% include 'posts/switcher.html' %}
+    {% include 'posts/posts_page.html' %}
   </div>
 {% endblock %}

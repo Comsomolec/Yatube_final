@@ -73,10 +73,10 @@ class PostViewTests(TestCase):
             'posts:post_edit',
             args=[cls.post.pk]
         )
-        cls.COMMENT_URL = reverse(
-            'posts:add_comment',
-            args=[cls.post.pk]
-        )
+        cls.another_client = Client()
+        cls.another_client.force_login(cls.user_another)
+        cls.author_post_client = Client()
+        cls.author_post_client.force_login(cls.user)
 
     @classmethod
     def tearDownClass(cls):
@@ -84,43 +84,28 @@ class PostViewTests(TestCase):
         shutil.rmtree(TEMP_MEDIA_ROOT, ignore_errors=True)
 
     def setUp(self):
-        """Создаем и авторизуем пользователя."""
-
-        self.another_client = Client()
-        self.another_client.force_login(self.user_another)
-        self.author_post_client = Client()
-        self.author_post_client.force_login(self.user)
 
         cache.clear()
 
     def test_pages_formed_with_correct_context(self):
         """Страницы сформированы с правильным контекстом."""
 
-        data = {
-            'text': TEST_COMMENT,
-        }
-        self.author_post_client.post(
-            self.COMMENT_URL,
-            data,
-            follow=True
+        Follow.objects.create(
+            user=self.user_another,
+            author=self.user
         )
         urls = [
             INDEX_URL,
             PROFILE_URL,
             GROUP_LIST_URL,
             self.POST_DETAIL_URL,
+            FOLLOW_INDEX_URL
         ]
         for url in urls:
             with self.subTest(url=url):
-                response = self.author_post_client.get(url)
+                response = self.another_client.get(url)
                 if url == self.POST_DETAIL_URL:
                     post = response.context['post']
-                    comments = response.context['comments']
-                    self.assertEqual(len(comments), 1)
-                    comment = comments[0]
-                    self.assertEqual(comment.post.id, self.post.pk)
-                    self.assertEqual(comment.text, TEST_COMMENT)
-                    self.assertEqual(comment.author, self.post.author)
                 else:
                     posts = response.context['page_obj']
                     self.assertEqual(len(posts), 1)
@@ -129,7 +114,7 @@ class PostViewTests(TestCase):
                 self.assertEqual(post.text, self.post.text)
                 self.assertEqual(post.author, self.post.author)
                 self.assertEqual(post.group, self.post.group)
-                self.assertTrue(post.image)
+                self.assertEqual(post.image, self.post.image)
 
     def test_post_not_included_in_another_group(self):
         """Пост не попал в другую группу"""
@@ -161,38 +146,40 @@ class PostViewTests(TestCase):
             Post(text=f'Тестовый пост {i}', author=self.user, group=self.group)
             for i in range(POSTS_IN_PAGE)
         )
+        Follow.objects.create(
+            user=self.user_another,
+            author=self.user
+        )
         pages = {
             INDEX_URL: POSTS_IN_PAGE,
             PROFILE_URL: POSTS_IN_PAGE,
             GROUP_LIST_URL: POSTS_IN_PAGE,
+            FOLLOW_INDEX_URL: POSTS_IN_PAGE,
             INDEX_URL + '?page=2': posts_in_second_page,
             PROFILE_URL + '?page=2': posts_in_second_page,
             GROUP_LIST_URL + '?page=2': posts_in_second_page,
+            FOLLOW_INDEX_URL + '?page=2': posts_in_second_page,
         }
         for page, amount_posts in pages.items():
             with self.subTest(page=page):
                 self.assertEqual(
-                    len(self.author_post_client.get(page).context['page_obj']),
+                    len(self.another_client.get(page).context['page_obj']),
                     amount_posts)
 
     def test_cache_index(self):
         """Тестирование кэша для main_page."""
 
-        post = Post.objects.create(
-            author=self.user,
-            text='Этот пост будет удален',
-            group=self.group,
-        )
-        first_time_get_posts = self.author_post_client.get(INDEX_URL).content
-        Post.objects.filter(id=post.pk).delete()
-        second_time_get_posts = self.author_post_client.get(INDEX_URL).content
-        self.assertEqual(first_time_get_posts, second_time_get_posts)
+        response = self.author_post_client.get(INDEX_URL)
+        first_get_content = response.content
+        response.context['page_obj'][0].delete()
+        second_get_content = self.author_post_client.get(INDEX_URL).content
+        self.assertEqual(first_get_content, second_get_content)
         cache.clear()
-        third_time_get_posts = self.author_post_client.get(INDEX_URL).content
-        self.assertNotEqual(third_time_get_posts, second_time_get_posts)
+        third_get_content = self.author_post_client.get(INDEX_URL).content
+        self.assertNotEqual(third_get_content, second_get_content)
 
     def test_follow_user(self):
-        """Тестирование подписки на пользователей"""
+        """Тестирование подписки на пользователя"""
 
         self.assertFalse(
             Follow.objects.filter(user=self.user_another, author=self.user)
@@ -201,19 +188,11 @@ class PostViewTests(TestCase):
         self.assertTrue(
             Follow.objects.filter(user=self.user_another, author=self.user)
         )
-        posts = self.another_client.get(FOLLOW_INDEX_URL).context['page_obj']
-        self.assertEqual(len(posts), 1)
-        data = {
-            'text': 'Пост отображается у подписчиков',
-            'group': self.group.id,
-        }
-        self.author_post_client.post(CREATE_URL, data=data)
-        posts = self.another_client.get(FOLLOW_INDEX_URL).context['page_obj']
-        self.assertEqual(len(posts), 2)
-        post = posts[0]
-        self.assertEqual(post.text, data['text'])
-        self.assertEqual(post.group.id, data['group'])
-        self.assertEqual(post.author, self.user)
+
+    def test_unfollow_user(self):
+        """Тестирование отписки от пользователя"""
+
         self.another_client.get(UNFOLLOW_URL)
-        posts = self.another_client.get(FOLLOW_INDEX_URL).context['page_obj']
-        self.assertEqual(len(posts), 0)
+        self.assertFalse(
+            Follow.objects.filter(user=self.user_another, author=self.user)
+        )

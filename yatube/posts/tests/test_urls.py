@@ -13,11 +13,15 @@ INDEX_URL = reverse('posts:main_page')
 CREATE_URL = reverse('posts:post_create')
 PROFILE_URL = reverse('posts:profile', args=[TEST_USERNAME])
 GROUP_LIST_URL = reverse('posts:group_posts', args=[TEST_SLUG])
-FOLLOW_URL = reverse('posts:follow_index')
+FOLLOW_INDEX = reverse('posts:follow_index')
+FOLLOW_URL = reverse('posts:profile_follow', args=[TEST_USERNAME])
+UNFOLLOW_URL = reverse('posts:profile_unfollow', args=[TEST_USERNAME])
 LOGIN = reverse('users:login')
 UNEXISTING_PAGE: str = '/unexisting_page/'
 CREATE_REDIRECT_LOGIN = f'{LOGIN}?next={CREATE_URL}'
+FOLLOW_INDEX_REDIRECT_LOGIN = f'{LOGIN}?next={FOLLOW_INDEX}'
 FOLLOW_REDIRECT_LOGIN = f'{LOGIN}?next={FOLLOW_URL}'
+UNFOLLOW_REDIRECT_LOGIN = f'{LOGIN}?next={UNFOLLOW_URL}'
 NOT_FOUND = HTTPStatus.NOT_FOUND
 FOUND = HTTPStatus.FOUND
 OK = HTTPStatus.OK
@@ -48,19 +52,15 @@ class PostURLTests(TestCase):
             'posts:post_edit',
             args=[cls.post.pk]
         )
-        cls.COMMENT_URL = reverse(
-            'posts:add_comment',
-            args=[cls.post.pk]
-        )
         cls.EDIT_REDIRECT_LOGIN = f'{LOGIN}?next={cls.POST_EDIT_URL}'
-        cls.COMMENT_REDIRECT_LOGIN = f'{LOGIN}?next={cls.COMMENT_URL}'
+
+        cls.guest = Client()
+        cls.another = Client()
+        cls.another.force_login(cls.auth_user)
+        cls.author = Client()
+        cls.author.force_login(cls.user)
 
     def setUp(self):
-        self.guest = Client()
-        self.another = Client()
-        self.another.force_login(self.auth_user)
-        self.author = Client()
-        self.author.force_login(self.user)
 
         cache.clear()
 
@@ -78,10 +78,10 @@ class PostURLTests(TestCase):
             [self.POST_EDIT_URL, self.guest, FOUND],
             [self.POST_EDIT_URL, self.another, FOUND],
             [self.POST_EDIT_URL, self.author, OK],
-            [self.COMMENT_URL, self.guest, FOUND],
-            [self.COMMENT_URL, self.another, FOUND],
+            [FOLLOW_INDEX, self.guest, FOUND],
+            [FOLLOW_INDEX, self.another, OK],
             [FOLLOW_URL, self.guest, FOUND],
-            [FOLLOW_URL, self.another, OK],
+            [UNFOLLOW_URL, self.guest, FOUND],
         ]
         for url, user, status in cases_list:
             with self.subTest(url=url, user=user):
@@ -97,9 +97,9 @@ class PostURLTests(TestCase):
             [CREATE_URL, self.guest, CREATE_REDIRECT_LOGIN],
             [self.POST_EDIT_URL, self.guest, self.EDIT_REDIRECT_LOGIN],
             [self.POST_EDIT_URL, self.another, self.POST_DETAIL_URL],
-            [self.COMMENT_URL, self.guest, self.COMMENT_REDIRECT_LOGIN],
-            [self.COMMENT_URL, self.another, self.POST_DETAIL_URL],
+            [FOLLOW_INDEX, self.guest, FOLLOW_INDEX_REDIRECT_LOGIN],
             [FOLLOW_URL, self.guest, FOLLOW_REDIRECT_LOGIN],
+            [UNFOLLOW_URL, self.guest, UNFOLLOW_REDIRECT_LOGIN],
         ]
         for url, user, redirect_url in cases_list:
             with self.subTest(url=url, user=user):
@@ -118,7 +118,7 @@ class PostURLTests(TestCase):
             [CREATE_URL, self.author, 'posts/create_post.html'],
             [self.POST_DETAIL_URL, self.author, 'posts/post_detail.html'],
             [self.POST_EDIT_URL, self.author, 'posts/create_post.html'],
-            [FOLLOW_URL, self.author, 'posts/follow.html'],
+            [FOLLOW_INDEX, self.author, 'posts/follow.html'],
             [UNEXISTING_PAGE, self.author, 'core/404.html'],
         ]
         for url, user, template in templates_url:

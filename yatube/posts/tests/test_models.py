@@ -1,16 +1,19 @@
 from django.test import TestCase
 
-from ..models import Group, Post, User, Comment
+from ..models import Group, Post, User, Comment, Follow
 
 TEST_SLUG = 'test_slug'
-TEST_USERNAME = 'Author_post'
+TEST_USERNAME_AUTHOR = 'Author_post'
+TEST_USERNAME_ANOTHER = 'Another'
 
 
 class PostModelTest(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.user = User.objects.create_user(username=TEST_USERNAME)
+        cls.user = User.objects.create_user(username=TEST_USERNAME_AUTHOR)
+        cls.another_user = User.objects.create_user(
+            username=TEST_USERNAME_ANOTHER)
         cls.group = Group.objects.create(
             title='Тестовая группа',
             slug=TEST_SLUG,
@@ -26,24 +29,33 @@ class PostModelTest(TestCase):
             author=cls.user,
             text='Тестовый комментарий'
         )
+        cls.follow = Follow.objects.create(
+            user=cls.user,
+            author=cls.another_user
+        )
 
     def test_models_have_correct_object_names(self):
         """Проверяем, что у моделей корректно работает __str__."""
 
         self.assertEqual(self.group.title, str(self.group))
         self.assertEqual(Post.PATTERN.format(
-            self.post.author.username,
-            self.post.group.title,
-            self.post.pub_date,
-            self.post.text),
+            author=self.post.author.username,
+            group=self.post.group.title,
+            date=self.post.pub_date,
+            text=self.post.text),
             str(self.post)
         )
         self.assertEqual(Comment.PATTERN.format(
-            self.comment.post.id,
-            self.comment.author.username,
-            self.comment.created,
-            self.comment.text),
+            post=self.comment.post.id,
+            author=self.comment.author.username,
+            date=self.comment.created,
+            text=self.comment.text),
             str(self.comment)
+        )
+        self.assertEqual(Follow.PATTERN.format(
+            user=self.follow.user,
+            author=self.follow.author),
+            str(self.follow)
         )
 
     def test_post_verbose_names(self):

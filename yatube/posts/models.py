@@ -12,7 +12,7 @@ class Group(models.Model):
     slug = models.SlugField(
         max_length=50,
         unique=True,
-        verbose_name='Идентификатор уникальной записи в URL'
+        verbose_name='Идентификатор'
     )
     description = models.TextField(verbose_name='Описание')
 
@@ -26,7 +26,9 @@ class Group(models.Model):
 
 class Post(models.Model):
 
-    PATTERN = 'AUTHOR: {0}, GROUP: {1}, DATE: {2}, TEXT: {3:.15}.'
+    PATTERN = '''
+    AUTHOR: {author}, GROUP: {group}, DATE: {date}, TEXT: {text:.15}.
+    '''
 
     text = models.TextField(
         verbose_name='Новый пост',
@@ -65,28 +67,28 @@ class Post(models.Model):
 
     def __str__(self):
         return self.PATTERN.format(
-            self.author.username,
-            self.group.title,
-            self.pub_date,
-            self.text,
+            author=self.author.username,
+            group=self.group.title,
+            date=self.pub_date,
+            text=self.text,
         )
 
 
 class Comment(models.Model):
 
-    PATTERN = 'POST: {0}, AUTHOR: {1}, DATE: {2}, TEXT: {3:.15}.'
+    PATTERN = 'POST: {post}, AUTHOR: {author}, DATE: {date}, TEXT: {text:.15}.'
 
+    author = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='comments',
+        verbose_name='Автор комментария'
+    )
     post = models.ForeignKey(
         Post,
         on_delete=models.CASCADE,
         related_name='comments',
         verbose_name='Пост'
-    )
-    author = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        related_name='comments',
-        verbose_name='Автор'
     )
     created = models.DateTimeField(
         auto_now_add=True,
@@ -98,24 +100,28 @@ class Comment(models.Model):
     )
 
     class Meta:
+        ordering = ('-created',)
         verbose_name = 'Комментарий'
         verbose_name_plural = 'Комментарии'
 
     def __str__(self):
         return self.PATTERN.format(
-            self.post.id,
-            self.author.username,
-            self.created,
-            self.text,
+            post=self.post.id,
+            author=self.author.username,
+            date=self.created,
+            text=self.text,
         )
 
 
 class Follow(models.Model):
+
+    PATTERN = '{user} follower {author}'
+
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
         related_name='follower',
-        verbose_name='Пользователь'
+        verbose_name='Подписчик'
     )
     author = models.ForeignKey(
         User,
@@ -123,3 +129,23 @@ class Follow(models.Model):
         related_name='following',
         verbose_name='Автор'
     )
+
+    class Meta:
+        verbose_name = 'Подписка'
+        verbose_name_plural = 'Подписки'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user', 'author'], name='unique_user_author')
+        ]
+
+    def validations(self, author):
+
+        if self.user == author:
+            raise ValueError('Нельзя подписываться на себя')
+        return author
+
+    def __str__(self):
+        return self.PATTERN.format(
+            user=self.user.username,
+            author=self.author.username,
+        )
