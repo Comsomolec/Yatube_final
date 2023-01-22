@@ -151,7 +151,7 @@ class PostFormTests(TestCase):
 
     def test_form_comment(self):
         """Отправка формы добавления комментария работает корректно."""
-
+        comments = set(Comment.objects.all())
         data = {
             'text': 'Тестовый комментарий',
         }
@@ -161,9 +161,9 @@ class PostFormTests(TestCase):
             follow=True
         )
         self.assertRedirects(response, self.POST_DETAIL_URL)
-        comments = Comment.objects.all()
+        comments = set(Comment.objects.all()) - comments
         self.assertEqual(len(comments), 1)
-        comment = comments[0]
+        comment = comments.pop()
         self.assertEqual(comment.text, data['text'])
         self.assertEqual(comment.author, self.user_another)
         self.assertEqual(comment.post, self.post)

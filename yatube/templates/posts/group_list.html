@@ -6,9 +6,9 @@
   <div class="container py-5">
     <h1> {{ group.title }} </h1>
     <p> {{ group.description|linebreaks }} </p>
-    {% include 'posts/includes/posts_page.html' with hide_group_markup=True %}
+    {% for post in page_obj %}
+      {% include 'posts/includes/posts_page.html' with hide_group=True %}
+    {% endfor %}
+    {% include 'includes/paginator.html' %}
   </div>
 {% endblock %}
-<!--Я не пытаюсь обманывать тесты. Встроенный тест ЯП ожидает цикл. Он у меня есть в подключаемом шаблоне.-->
-<!--Андрей, еще раз. Эти комментарии для прохождения встроенного теста ЯП. Без них не отправить проект на проверку. Цикл в posts_page.html{%for x in y%}-->
-<!--Андрей, еще раз. Эти комментарии для прохождения встроенного теста ЯП. Без них не отправить проект на проверку. Цикл в posts_page.htm{%endfor%}-->

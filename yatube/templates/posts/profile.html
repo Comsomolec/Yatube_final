@@ -5,9 +5,9 @@
 {% block content %}
   <div class="container py-5">        
     <h1>Все посты пользователя {{ author.get_full_name }} </h1>
-    <h4>Всего постов: {{ author.posts.count }} </h4>
-    <h4>Количество подписчиков: {{ author.following.count }}</h4>
-    <h4>Подписки: {{ author.follower.count }}</h4>
+    <h4>Постов: {{ author.posts.count }} </h4>
+    <h4>Подписчиков: {{ author.following.count }}</h4>
+    <h4>Подписок: {{ author.follower.count }}</h4>
     <h4>Комментариев: {{ author.comments.count }}</h4>
     {% if user.is_authenticated and author != user %}
       {% if following %}
@@ -18,14 +18,17 @@
           Отписаться
         </a>
       {% else %}
-          <a
-            class="btn btn-lg btn-primary"
-            href="{% url 'posts:profile_follow' author.username %}" role="button"
-          >
-            Подписаться
-          </a>
+        <a
+          class="btn btn-lg btn-primary"
+          href="{% url 'posts:profile_follow' author.username %}" role="button"
+        >
+          Подписаться
+        </a>
       {% endif %}
     {% endif %}
-    {% include 'posts/includes/posts_page.html' with text_markup=True %}
+    {% for post in page_obj %}
+      {% include 'posts/includes/posts_page.html' with crop_text=True hide_profile=True %}
+    {% endfor %}
+    {% include 'includes/paginator.html' %}
   </div>
 {% endblock %}

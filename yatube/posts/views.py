@@ -40,7 +40,7 @@ def profile(request, username):
         'page_obj': paginator_page(author.posts.all(), request),
         'following':
             request.user.is_authenticated
-            and request.user.username != username
+            and request.user != author
             and Follow.objects.filter(
                 user=request.user, author=author).exists()
     })

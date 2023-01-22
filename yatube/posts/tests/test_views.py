@@ -115,8 +115,8 @@ class PostViewTests(TestCase):
                 self.assertEqual(post.group, self.post.group)
                 self.assertEqual(post.image, self.post.image)
 
-    def test_post_not_included_in_another_group_and_subscribe_list(self):
-        """Пост не попал в другую группу"""
+    def test_post_not_included_in_another_feed(self):
+        """Пост не попал в другую ленту"""
 
         urls = [GROUP2_LIST_URL, FOLLOW_INDEX_URL]
         Follow.objects.create(

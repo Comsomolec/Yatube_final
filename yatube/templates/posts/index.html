@@ -6,6 +6,9 @@
   <div class="container py-5">
     <h1> Последние обновления на сайте </h1>
     {% include 'posts/includes/switcher.html' with index=True %}
-    {% include 'posts/includes/posts_page.html' with group_list=False %}
+    {% for post in page_obj %}
+      {% include 'posts/includes/posts_page.html' %}
+    {% endfor %}
+    {% include 'includes/paginator.html' %}
   </div>
 {% endblock %}
