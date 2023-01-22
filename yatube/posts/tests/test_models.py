@@ -34,10 +34,9 @@ class PostModelTest(TestCase):
             author=cls.another_user
         )
 
-    def test_models_have_correct_object_names(self):
-        """Проверяем, что у моделей корректно работает __str__."""
+    def test_post_models_have_correct_object_names(self):
+        """Проверяем, что у модели Post корректно работает __str__."""
 
-        self.assertEqual(self.group.title, str(self.group))
         self.assertEqual(Post.PATTERN.format(
             author=self.post.author.username,
             group=self.post.group.title,
@@ -45,17 +44,30 @@ class PostModelTest(TestCase):
             text=self.post.text),
             str(self.post)
         )
+
+    def test_group_models_have_correct_object_names(self):
+        """Проверяем, что у модели Group корректно работает __str__."""
+
+        self.assertEqual(self.group.title, str(self.group))
+
+    def test_follow_models_have_correct_object_names(self):
+        """Проверяем, что у модели Follow корректно работает __str__."""
+
+        self.assertEqual(Follow.PATTERN.format(
+            user=self.follow.user,
+            author=self.follow.author),
+            str(self.follow)
+        )
+
+    def test_comment_models_have_correct_object_names(self):
+        """Проверяем, что у модели Comment корректно работает __str__."""
+
         self.assertEqual(Comment.PATTERN.format(
             post=self.comment.post.id,
             author=self.comment.author.username,
             date=self.comment.created,
             text=self.comment.text),
             str(self.comment)
-        )
-        self.assertEqual(Follow.PATTERN.format(
-            user=self.follow.user,
-            author=self.follow.author),
-            str(self.follow)
         )
 
     def test_post_verbose_names(self):

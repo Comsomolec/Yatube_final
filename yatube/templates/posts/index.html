@@ -5,7 +5,11 @@
 {% block content %}
   <div class="container py-5">
     <h1> Последние обновления на сайте </h1>
-    {% include 'posts/switcher.html' %}
-    {% include 'posts/posts_page.html' %}
+    {% with index=True %}
+      {% include 'posts/includes/switcher.html' %}
+    {% endwith %}
+    {% with group_list=False %}
+      {% include 'posts/includes/posts_page.html' %}
+    {% endwith %}
   </div>
 {% endblock %}

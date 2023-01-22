@@ -138,12 +138,6 @@ class Follow(models.Model):
                 fields=['user', 'author'], name='unique_user_author')
         ]
 
-    def validations(self, author):
-
-        if self.user == author:
-            raise ValueError('Нельзя подписываться на себя')
-        return author
-
     def __str__(self):
         return self.PATTERN.format(
             user=self.user.username,

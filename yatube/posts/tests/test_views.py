@@ -138,14 +138,26 @@ class PostViewTests(TestCase):
         self.assertEqual(self.group.slug, group.slug)
         self.assertEqual(self.group.id, group.id)
 
+    def test_post_not_included_in_another_subscribe_list(self):
+        """Пост не попал на чужую ленту-подписок."""
+
+        Follow.objects.create(
+            user=self.user_another,
+            author=self.user
+        )
+        self.assertNotIn(self.post, self.author_post_client.get(
+            FOLLOW_INDEX_URL).context['page_obj'])
+
     def test_paginator(self):
         """Тестирование пагинатора"""
-        posts_in_second_page = len(Post.objects.all())
 
         Post.objects.bulk_create(
             Post(text=f'Тестовый пост {i}', author=self.user, group=self.group)
             for i in range(POSTS_IN_PAGE)
         )
+        posts_count = len(Post.objects.all())
+        last_page_number = (posts_count // POSTS_IN_PAGE) + 1
+        post_in_last_page = posts_count % POSTS_IN_PAGE
         Follow.objects.create(
             user=self.user_another,
             author=self.user
@@ -155,15 +167,15 @@ class PostViewTests(TestCase):
             PROFILE_URL: POSTS_IN_PAGE,
             GROUP_LIST_URL: POSTS_IN_PAGE,
             FOLLOW_INDEX_URL: POSTS_IN_PAGE,
-            INDEX_URL + '?page=2': posts_in_second_page,
-            PROFILE_URL + '?page=2': posts_in_second_page,
-            GROUP_LIST_URL + '?page=2': posts_in_second_page,
-            FOLLOW_INDEX_URL + '?page=2': posts_in_second_page,
+            INDEX_URL + f'?page={last_page_number}': post_in_last_page,
+            PROFILE_URL + f'?page={last_page_number}': post_in_last_page,
+            GROUP_LIST_URL + f'?page={last_page_number}': post_in_last_page,
+            FOLLOW_INDEX_URL + f'?page={last_page_number}': post_in_last_page,
         }
-        for page, amount_posts in pages.items():
-            with self.subTest(page=page):
+        for url, amount_posts in pages.items():
+            with self.subTest(url=url):
                 self.assertEqual(
-                    len(self.another_client.get(page).context['page_obj']),
+                    len(self.another_client.get(url).context['page_obj']),
                     amount_posts)
 
     def test_cache_index(self):
@@ -182,11 +194,13 @@ class PostViewTests(TestCase):
         """Тестирование подписки на пользователя"""
 
         self.assertFalse(
-            Follow.objects.filter(user=self.user_another, author=self.user)
+            Follow.objects.filter(
+                user=self.user_another, author=self.user).exists()
         )
         self.another_client.get(FOLLOW_URL)
         self.assertTrue(
-            Follow.objects.filter(user=self.user_another, author=self.user)
+            Follow.objects.filter(
+                user=self.user_another, author=self.user).exists()
         )
 
     def test_unfollow_user(self):
@@ -194,5 +208,6 @@ class PostViewTests(TestCase):
 
         self.another_client.get(UNFOLLOW_URL)
         self.assertFalse(
-            Follow.objects.filter(user=self.user_another, author=self.user)
+            Follow.objects.filter(
+                user=self.user_another, author=self.user).exists()
         )

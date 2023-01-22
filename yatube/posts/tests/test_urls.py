@@ -61,7 +61,6 @@ class PostURLTests(TestCase):
         cls.author.force_login(cls.user)
 
     def setUp(self):
-
         cache.clear()
 
     def test_url_exists_for_users(self):
@@ -81,7 +80,11 @@ class PostURLTests(TestCase):
             [FOLLOW_INDEX, self.guest, FOUND],
             [FOLLOW_INDEX, self.another, OK],
             [FOLLOW_URL, self.guest, FOUND],
+            [FOLLOW_URL, self.another, FOUND],
+            [FOLLOW_URL, self.author, FOUND],
             [UNFOLLOW_URL, self.guest, FOUND],
+            [UNFOLLOW_URL, self.another, FOUND],
+            [UNFOLLOW_URL, self.author, NOT_FOUND],
         ]
         for url, user, status in cases_list:
             with self.subTest(url=url, user=user):
@@ -99,7 +102,10 @@ class PostURLTests(TestCase):
             [self.POST_EDIT_URL, self.another, self.POST_DETAIL_URL],
             [FOLLOW_INDEX, self.guest, FOLLOW_INDEX_REDIRECT_LOGIN],
             [FOLLOW_URL, self.guest, FOLLOW_REDIRECT_LOGIN],
+            [FOLLOW_URL, self.another, PROFILE_URL],
+            [FOLLOW_URL, self.author, PROFILE_URL],
             [UNFOLLOW_URL, self.guest, UNFOLLOW_REDIRECT_LOGIN],
+            [UNFOLLOW_URL, self.another, PROFILE_URL],
         ]
         for url, user, redirect_url in cases_list:
             with self.subTest(url=url, user=user):
@@ -121,9 +127,9 @@ class PostURLTests(TestCase):
             [FOLLOW_INDEX, self.author, 'posts/follow.html'],
             [UNEXISTING_PAGE, self.author, 'core/404.html'],
         ]
-        for url, user, template in templates_url:
+        for url, client, template in templates_url:
             with self.subTest(url=url):
                 self.assertTemplateUsed(
-                    user.get(url),
+                    client.get(url),
                     template
                 )
