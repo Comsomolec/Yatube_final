@@ -84,7 +84,6 @@ class PostViewTests(TestCase):
         shutil.rmtree(TEMP_MEDIA_ROOT, ignore_errors=True)
 
     def setUp(self):
-
         cache.clear()
 
     def test_pages_formed_with_correct_context(self):
