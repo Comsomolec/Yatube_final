@@ -10,15 +10,15 @@ USER = 'author'
 
 CASES = [
     ['/', 'main_page', []],
-    ['/group/test_slug/', 'group_posts', ['test_slug']],
-    ['/profile/author/', 'profile', ['author']],
+    [f'/group/{SLUG}/', 'group_posts', [SLUG]],
+    [f'/profile/{USER}/', 'profile', [USER]],
     ['/create/', 'post_create', []],
-    ['/posts/1/', 'post_detail', [1]],
-    ['/posts/1/edit/', 'post_edit', [1]],
-    ['/posts/1/comment/', 'add_comment', [1]],
+    [f'/posts/{POST_ID}/', 'post_detail', [POST_ID]],
+    [f'/posts/{POST_ID}/edit/', 'post_edit', [POST_ID]],
+    [f'/posts/{POST_ID}/comment/', 'add_comment', [POST_ID]],
     ['/follow/', 'follow_index', []],
-    ['/profile/author/follow/', 'profile_follow', ['author']],
-    ['/profile/author/unfollow/', 'profile_unfollow', ['author']],
+    [f'/profile/{USER}/follow/', 'profile_follow', [USER]],
+    [f'/profile/{USER}/unfollow/', 'profile_unfollow', [USER]],
 ]
 
 

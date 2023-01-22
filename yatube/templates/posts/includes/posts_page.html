@@ -13,13 +13,13 @@
   {% thumbnail post.image "600x400" crop="center" upscale=True as im %}
     <img src="{{ im.url }}" width="{{ im.width }}" height="{{ im.height }}">
   {% endthumbnail %}
-  {% if profile %}
+  {% if text_markup %}
     {{ post.text|truncatechars:80|linebreaks }}
     <a href="{% url 'posts:post_detail' post.id %}">читать полностью</a>
   {% else %}
     {{ post.text|linebreaks }}
   {% endif %}
-  {% if post.group and not group_list %}
+  {% if post.group and not hide_group_markup %}
     <a href="{% url 'posts:group_posts' post.group.slug %}"
     >#{{ post.group.title }}</a>
   {% endif %}

@@ -115,11 +115,18 @@ class PostViewTests(TestCase):
                 self.assertEqual(post.group, self.post.group)
                 self.assertEqual(post.image, self.post.image)
 
-    def test_post_not_included_in_another_group(self):
+    def test_post_not_included_in_another_group_and_subscribe_list(self):
         """Пост не попал в другую группу"""
 
-        self.assertNotIn(self.post, self.author_post_client.get(
-            GROUP2_LIST_URL).context['page_obj'])
+        urls = [GROUP2_LIST_URL, FOLLOW_INDEX_URL]
+        Follow.objects.create(
+            user=self.user_another,
+            author=self.user
+        )
+        for url in urls:
+            with self.subTest(url=url):
+                self.assertNotIn(self.post, self.author_post_client.get(
+                    url).context['page_obj'])
 
     def test_author_in_context_profile(self):
         """Проверка автора в контексте профиля"""
@@ -137,26 +144,15 @@ class PostViewTests(TestCase):
         self.assertEqual(self.group.slug, group.slug)
         self.assertEqual(self.group.id, group.id)
 
-    def test_post_not_included_in_another_subscribe_list(self):
-        """Пост не попал на чужую ленту-подписок."""
-
-        Follow.objects.create(
-            user=self.user_another,
-            author=self.user
-        )
-        self.assertNotIn(self.post, self.author_post_client.get(
-            FOLLOW_INDEX_URL).context['page_obj'])
-
     def test_paginator(self):
         """Тестирование пагинатора"""
 
+        posts_in_second_page = 1
+        Post.objects.all().delete()
         Post.objects.bulk_create(
             Post(text=f'Тестовый пост {i}', author=self.user, group=self.group)
-            for i in range(POSTS_IN_PAGE)
+            for i in range(POSTS_IN_PAGE + posts_in_second_page)
         )
-        posts_count = len(Post.objects.all())
-        last_page_number = (posts_count // POSTS_IN_PAGE) + 1
-        post_in_last_page = posts_count % POSTS_IN_PAGE
         Follow.objects.create(
             user=self.user_another,
             author=self.user
@@ -166,10 +162,10 @@ class PostViewTests(TestCase):
             PROFILE_URL: POSTS_IN_PAGE,
             GROUP_LIST_URL: POSTS_IN_PAGE,
             FOLLOW_INDEX_URL: POSTS_IN_PAGE,
-            INDEX_URL + f'?page={last_page_number}': post_in_last_page,
-            PROFILE_URL + f'?page={last_page_number}': post_in_last_page,
-            GROUP_LIST_URL + f'?page={last_page_number}': post_in_last_page,
-            FOLLOW_INDEX_URL + f'?page={last_page_number}': post_in_last_page,
+            INDEX_URL + '?page=2': posts_in_second_page,
+            PROFILE_URL + '?page=2': posts_in_second_page,
+            GROUP_LIST_URL + '?page=2': posts_in_second_page,
+            FOLLOW_INDEX_URL + '?page=2': posts_in_second_page,
         }
         for url, amount_posts in pages.items():
             with self.subTest(url=url):

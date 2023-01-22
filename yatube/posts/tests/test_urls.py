@@ -86,10 +86,10 @@ class PostURLTests(TestCase):
             [UNFOLLOW_URL, self.another, FOUND],
             [UNFOLLOW_URL, self.author, NOT_FOUND],
         ]
-        for url, user, status in cases_list:
-            with self.subTest(url=url, user=user):
+        for url, client, status in cases_list:
+            with self.subTest(url=url, client=client):
                 self.assertEqual(
-                    user.get(url).status_code,
+                    client.get(url).status_code,
                     status
                 )
 

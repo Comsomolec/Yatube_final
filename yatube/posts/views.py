@@ -39,9 +39,10 @@ def profile(request, username):
         'author': author,
         'page_obj': paginator_page(author.posts.all(), request),
         'following':
-            request.user.is_authenticated and request.user.follower.filter(
-            author=author).exists() and author.following.filter(
-            user=request.user, author=author).exists()
+            request.user.is_authenticated
+            and request.user.username != username
+            and Follow.objects.filter(
+                user=request.user, author=author).exists()
     })
 
 
@@ -116,7 +117,7 @@ def follow_index(request):
 def profile_follow(request, username):
     user = request.user
     if user.username != username:
-        author = User.objects.get(username=username)
+        author = get_object_or_404(User, username=username)
         if not Follow.objects.filter(
             user=user, author=author
         ).exists():
@@ -132,9 +133,7 @@ def profile_follow(request, username):
 def profile_unfollow(request, username):
     get_object_or_404(
         Follow, user=request.user,
-        # user__follower__author__username=username - тесты ЯП падают!
-        # Мои работают.
-        author=User.objects.get(username=username)
+        author__username=username
     ).delete()
     return redirect(
         reverse('posts:profile', args=[username])

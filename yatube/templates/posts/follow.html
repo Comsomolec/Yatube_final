@@ -5,9 +5,7 @@
 {% block content %}
   <div class="container py-5">
     <h1> Посты избранных авторов </h1>
-    {% with index=False %}
-      {% include 'posts/includes/switcher.html' %}
-    {% endwith %}
+    {% include 'posts/includes/switcher.html' with index=False%}
     {% include 'posts/includes/posts_page.html' %}
   </div>
 {% endblock %}

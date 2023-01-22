@@ -5,9 +5,10 @@
 {% block content %}
   <div class="container py-5">        
     <h1>Все посты пользователя {{ author.get_full_name }} </h1>
-    <h3>Всего постов: {{ author.posts.count }} </h3>
-    <h3>Подписчики: {{ author.following.count }}</h3>
-    <h3>Подписки: {{ author.follower.count }}</h3>
+    <h4>Всего постов: {{ author.posts.count }} </h4>
+    <h4>Количество подписчиков: {{ author.following.count }}</h4>
+    <h4>Подписки: {{ author.follower.count }}</h4>
+    <h4>Комментариев: {{ author.comments.count }}</h4>
     {% if user.is_authenticated and author != user %}
       {% if following %}
         <a
@@ -25,8 +26,6 @@
           </a>
       {% endif %}
     {% endif %}
-    {% with profile=True %}
-      {% include 'posts/includes/posts_page.html' %}
-    {% endwith %}
+    {% include 'posts/includes/posts_page.html' with text_markup=True %}
   </div>
 {% endblock %}

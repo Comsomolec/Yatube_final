@@ -161,7 +161,7 @@ class PostFormTests(TestCase):
             follow=True
         )
         self.assertRedirects(response, self.POST_DETAIL_URL)
-        comments = self.post.comments.all()
+        comments = Comment.objects.all()
         self.assertEqual(len(comments), 1)
         comment = comments[0]
         self.assertEqual(comment.text, data['text'])
@@ -189,9 +189,7 @@ class PostFormTests(TestCase):
             with self.subTest(client=client):
                 response = client.post(self.POST_EDIT_URL, data, follow=True)
                 post = Post.objects.get(id=self.post.id)
-                self.assertNotEqual(post.text, data['text'])
-                self.assertNotEqual(post.group, data['group'])
-                self.assertNotEqual(post.image, data['image'])
+                self.assertEqual(post.author, self.post.author)
                 self.assertEqual(post.text, self.post.text)
                 self.assertEqual(post.group, self.post.group)
                 self.assertEqual(post.image, self.post.image)
