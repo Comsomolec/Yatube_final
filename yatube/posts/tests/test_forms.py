@@ -221,7 +221,7 @@ class PostFormTests(TestCase):
 
     def test_guest_user_try_create_comment(self):
         """Гостевой пользователь пытается создать комментарий"""
-        
+
         comments_before = set(Comment.objects.all())
         data = {
             'text': 'Тестовый комментарий',
