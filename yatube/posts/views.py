@@ -134,7 +134,7 @@ def profile_unfollow(request, username):
         Follow, user=request.user,
         # user__follower__author__username=username - тесты ЯП падают!
         # Мои работают.
-        author=User.objects.get(username=username) 
+        author=User.objects.get(username=username)
     ).delete()
     return redirect(
         reverse('posts:profile', args=[username])
